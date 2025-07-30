@@ -26,7 +26,7 @@ export interface EmailTemplate {
 
 export class EmailService {
   private static readonly ADMIN_EMAIL = "ashuraliyevnurmuhammad16@gmail.com";
-  private static readonly SUPPORT_EMAIL = "support@akamquiz.uz";
+  // private static readonly SUPPORT_EMAIL = "support@akamquiz.uz";
   private static readonly COMPANY_NAME = "Akam Quiz";
 
   // Real email sending with professional templates
