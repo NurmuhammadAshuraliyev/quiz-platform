@@ -1,184 +1,137 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"
 
 interface WorkingHoursStatus {
-  isWorking: boolean;
-  status: string;
-  statusColor: string;
-  statusIcon: string;
-  nextWorkingTime: string;
-  timeUntilWork: string;
+  status: string
+  statusColor: string
+  statusIcon: string
+  nextWorkingTime?: string
+  timeUntilWork?: string
 }
 
 export function useRealTimeWorkingHours(): WorkingHoursStatus {
   const [status, setStatus] = useState<WorkingHoursStatus>({
-    isWorking: false,
     status: "Yuklanmoqda...",
     statusColor: "text-gray-500",
     statusIcon: "⏳",
-    nextWorkingTime: "",
-    timeUntilWork: "",
-  });
+  })
 
   useEffect(() => {
     const updateStatus = () => {
-      const now = new Date();
-      const day = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-      const hour = now.getHours();
-      const minute = now.getMinutes();
-      const currentTime = hour * 60 + minute; // Minutes since midnight
+      const now = new Date()
+      const currentHour = now.getHours()
+      const currentDay = now.getDay() // 0 = Sunday, 1 = Monday, etc.
+      const currentMinute = now.getMinutes()
 
-      // Working hours in minutes
-      const weekdayStart = 9 * 60; // 9:00
-      const weekdayEnd = 18 * 60; // 18:00
-      const saturdayStart = 9 * 60; // 9:00
-      const saturdayEnd = 14 * 60; // 14:00
+      let newStatus: WorkingHoursStatus
 
-      let isWorking = false;
-      let statusText = "";
-      let statusColor = "";
-      let statusIcon = "";
-      let nextWorkingTime = "";
-      let timeUntilWork = "";
-
-      if (day === 0) {
-        // Sunday - closed
-        isWorking = false;
-        statusText = "Yakshanba - Dam olish kuni";
-        statusColor = "text-red-600";
-        statusIcon = "🔴";
-        nextWorkingTime = "Dushanba 9:00";
-
-        const mondayStart = new Date(now);
-        mondayStart.setDate(now.getDate() + 1);
-        mondayStart.setHours(9, 0, 0, 0);
-        const timeDiff = mondayStart.getTime() - now.getTime();
-        const hoursUntil = Math.floor(timeDiff / (1000 * 60 * 60));
-        timeUntilWork = `${hoursUntil} soat`;
-      } else if (day >= 1 && day <= 5) {
-        // Monday to Friday
-        if (currentTime >= weekdayStart && currentTime < weekdayEnd) {
-          isWorking = true;
-          statusText = "Hozir ishlaymiz";
-          statusColor = "text-green-600";
-          statusIcon = "🟢";
-
-          const endTime = new Date(now);
-          endTime.setHours(18, 0, 0, 0);
-          const timeDiff = endTime.getTime() - now.getTime();
-          const hoursUntil = Math.floor(timeDiff / (1000 * 60 * 60));
-          const minutesUntil = Math.floor(
-            (timeDiff % (1000 * 60 * 60)) / (1000 * 60)
-          );
-          timeUntilWork = `${hoursUntil}:${minutesUntil
-            .toString()
-            .padStart(2, "0")} gacha`;
-        } else if (currentTime < weekdayStart) {
-          isWorking = false;
-          statusText = "Ish vaqtidan oldin";
-          statusColor = "text-orange-600";
-          statusIcon = "🟡";
-          nextWorkingTime = "Bugun 9:00";
-
-          const startTime = new Date(now);
-          startTime.setHours(9, 0, 0, 0);
-          const timeDiff = startTime.getTime() - now.getTime();
-          const hoursUntil = Math.floor(timeDiff / (1000 * 60 * 60));
-          const minutesUntil = Math.floor(
-            (timeDiff % (1000 * 60 * 60)) / (1000 * 60)
-          );
-          timeUntilWork = `${hoursUntil}:${minutesUntil
-            .toString()
-            .padStart(2, "0")}`;
-        } else {
-          isWorking = false;
-          statusText = "Ish vaqtidan keyin";
-          statusColor = "text-orange-600";
-          statusIcon = "🟡";
-
-          if (day === 5) {
-            nextWorkingTime = "Shanba 9:00";
-          } else {
-            nextWorkingTime = "Ertaga 9:00";
-          }
-
-          const nextDay = new Date(now);
-          nextDay.setDate(now.getDate() + 1);
-          nextDay.setHours(9, 0, 0, 0);
-          const timeDiff = nextDay.getTime() - now.getTime();
-          const hoursUntil = Math.floor(timeDiff / (1000 * 60 * 60));
-          timeUntilWork = `${hoursUntil} soat`;
+      // Sunday = 0, Saturday = 6
+      if (currentDay === 0) {
+        // Sunday - Dam olish kuni
+        newStatus = {
+          status: "Dam olish kuni",
+          statusColor: "text-red-600",
+          statusIcon: "🔴",
+          nextWorkingTime: "Dushanba 9:00",
+          timeUntilWork: getTimeUntil(1, 9, 0), // Monday 9:00
         }
-      } else if (day === 6) {
+      } else if (currentDay === 6) {
         // Saturday
-        if (currentTime >= saturdayStart && currentTime < saturdayEnd) {
-          isWorking = true;
-          statusText = "Hozir ishlaymiz (Shanba)";
-          statusColor = "text-green-600";
-          statusIcon = "🟢";
-
-          const endTime = new Date(now);
-          endTime.setHours(14, 0, 0, 0);
-          const timeDiff = endTime.getTime() - now.getTime();
-          const hoursUntil = Math.floor(timeDiff / (1000 * 60 * 60));
-          const minutesUntil = Math.floor(
-            (timeDiff % (1000 * 60 * 60)) / (1000 * 60)
-          );
-          timeUntilWork = `${hoursUntil}:${minutesUntil
-            .toString()
-            .padStart(2, "0")} gacha`;
-        } else if (currentTime < saturdayStart) {
-          isWorking = false;
-          statusText = "Ish vaqtidan oldin (Shanba)";
-          statusColor = "text-orange-600";
-          statusIcon = "🟡";
-          nextWorkingTime = "Bugun 9:00";
-
-          const startTime = new Date(now);
-          startTime.setHours(9, 0, 0, 0);
-          const timeDiff = startTime.getTime() - now.getTime();
-          const hoursUntil = Math.floor(timeDiff / (1000 * 60 * 60));
-          const minutesUntil = Math.floor(
-            (timeDiff % (1000 * 60 * 60)) / (1000 * 60)
-          );
-          timeUntilWork = `${hoursUntil}:${minutesUntil
-            .toString()
-            .padStart(2, "0")}`;
+        if (currentHour >= 9 && currentHour < 14) {
+          newStatus = {
+            status: "Hozir ishlaymiz",
+            statusColor: "text-green-600",
+            statusIcon: "🟢",
+          }
+        } else if (currentHour < 9) {
+          newStatus = {
+            status: "Hali ishlamayapmiz",
+            statusColor: "text-yellow-600",
+            statusIcon: "🟡",
+            nextWorkingTime: "Bugun 9:00",
+            timeUntilWork: getTimeUntil(6, 9, 0),
+          }
         } else {
-          isWorking = false;
-          statusText = "Shanba ish vaqti tugadi";
-          statusColor = "text-red-600";
-          statusIcon = "🔴";
-          nextWorkingTime = "Dushanba 9:00";
+          newStatus = {
+            status: "Ish vaqti tugadi",
+            statusColor: "text-red-600",
+            statusIcon: "🔴",
+            nextWorkingTime: "Dushanba 9:00",
+            timeUntilWork: getTimeUntil(1, 9, 0),
+          }
+        }
+      } else {
+        // Monday to Friday
+        if (currentHour >= 9 && currentHour < 18) {
+          newStatus = {
+            status: "Hozir ishlaymiz",
+            statusColor: "text-green-600",
+            statusIcon: "🟢",
+          }
+        } else if (currentHour < 9) {
+          newStatus = {
+            status: "Hali ishlamayapmiz",
+            statusColor: "text-yellow-600",
+            statusIcon: "🟡",
+            nextWorkingTime: "Bugun 9:00",
+            timeUntilWork: getTimeUntil(currentDay, 9, 0),
+          }
+        } else {
+          // After 18:00
+          const nextDay = currentDay === 5 ? 6 : currentDay + 1 // If Friday, next is Saturday
+          const nextHour = nextDay === 6 ? 9 : 9 // Saturday starts at 9, weekdays at 9
 
-          const mondayStart = new Date(now);
-          mondayStart.setDate(now.getDate() + 2);
-          mondayStart.setHours(9, 0, 0, 0);
-          const timeDiff = mondayStart.getTime() - now.getTime();
-          const hoursUntil = Math.floor(timeDiff / (1000 * 60 * 60));
-          timeUntilWork = `${hoursUntil} soat`;
+          newStatus = {
+            status: "Ish vaqti tugadi",
+            statusColor: "text-red-600",
+            statusIcon: "🔴",
+            nextWorkingTime: nextDay === 6 ? "Ertaga 9:00" : "Ertaga 9:00",
+            timeUntilWork: getTimeUntil(nextDay, nextHour, 0),
+          }
         }
       }
 
-      setStatus({
-        isWorking,
-        status: statusText,
-        statusColor,
-        statusIcon,
-        nextWorkingTime,
-        timeUntilWork,
-      });
-    };
+      setStatus(newStatus)
+    }
 
-    // Update immediately
-    updateStatus();
+    const getTimeUntil = (targetDay: number, targetHour: number, targetMinute: number): string => {
+      const now = new Date()
+      const target = new Date()
+
+      // Set target day
+      const daysUntilTarget = (targetDay - now.getDay() + 7) % 7
+      target.setDate(now.getDate() + daysUntilTarget)
+      target.setHours(targetHour, targetMinute, 0, 0)
+
+      // If target is today but time has passed, move to next week
+      if (daysUntilTarget === 0 && target <= now) {
+        target.setDate(target.getDate() + 7)
+      }
+
+      const diff = target.getTime() - now.getTime()
+      const hours = Math.floor(diff / (1000 * 60 * 60))
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+      if (hours > 24) {
+        const days = Math.floor(hours / 24)
+        const remainingHours = hours % 24
+        return `${days} kun ${remainingHours} soat`
+      } else if (hours > 0) {
+        return `${hours} soat ${minutes} daqiqa`
+      } else {
+        return `${minutes} daqiqa`
+      }
+    }
+
+    // Initial update
+    updateStatus()
 
     // Update every minute
-    const interval = setInterval(updateStatus, 60000);
+    const interval = setInterval(updateStatus, 60000)
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => clearInterval(interval)
+  }, [])
 
-  return status;
+  return status
 }

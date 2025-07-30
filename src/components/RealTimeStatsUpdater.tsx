@@ -1,39 +1,31 @@
 "use client"
 
 import { useEffect } from "react"
-import { clearAllDemoData } from "../hooks/useDynamicStats"
+import { useDynamicStats } from "../hooks/useDynamicStats"
 
 export default function RealTimeStatsUpdater() {
+  const stats = useDynamicStats()
+
   useEffect(() => {
-    // Sahifa yuklanganda demo ma'lumotlarni tozalash
-    const initializeCleanSystem = () => {
-      // Faqat development muhitida demo ma'lumotlarni tozalash
-      if (process.env.NODE_ENV === "development") {
-        clearAllDemoData()
+    // Update page title with real-time stats
+    document.title = `Akam Quiz - ${stats.realTimeData.onlineUsers} online`
+
+    // Update favicon based on activity
+    const favicon = document.querySelector("link[rel*='icon']") as HTMLLinkElement
+    if (favicon) {
+      // You could change favicon based on activity level
+      if (stats.realTimeData.onlineUsers > 200) {
+        // High activity - could use green favicon
       }
     }
 
-    // Dastlabki tozalash
-    initializeCleanSystem()
+    // Dispatch global stats update event
+    window.dispatchEvent(
+      new CustomEvent("statsUpdated", {
+        detail: stats,
+      }),
+    )
+  }, [stats])
 
-    // Faqat real hodisalarni kuzatish
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "users" || event.key === "testResults" || event.key === "userRatings") {
-        window.dispatchEvent(
-          new CustomEvent("localStorageChange", {
-            detail: { key: event.key, timestamp: Date.now() },
-          }),
-        )
-        console.log(`📊 Real data event: ${event.key}`)
-      }
-    }
-
-    window.addEventListener("storage", handleStorageChange)
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange)
-    }
-  }, [])
-
-  return null
+  return null // This component doesn't render anything
 }
