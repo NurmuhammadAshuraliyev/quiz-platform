@@ -1,41 +1,42 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"
 
 interface DynamicStats {
-  totalUsers: number;
-  totalQuestions: number;
-  totalTests: number;
-  averageScore: number;
-  successRate: number;
-  activeUsers: number;
-  averageUserRating: number;
-  totalRatings: number;
+  totalUsers: number
+  totalQuestions: number
+  totalTests: number
+  averageScore: number
+  successRate: number
+  activeUsers: number
+  averageUserRating: number
+  totalRatings: number
   difficultyStats: {
-    easy: number;
-    medium: number;
-    hard: number;
-  };
+    easy: number
+    medium: number
+    hard: number
+  }
   realTimeData: {
-    lastUpdated: string;
-    newUsersToday: number;
-    testsToday: number;
-    onlineUsers: number;
-  };
+    lastUpdated: string
+    newUsersToday: number
+    testsToday: number
+    onlineUsers: number
+  }
 }
 
 interface UserRating {
-  userId: string;
-  rating: number;
-  comment?: string;
-  timestamp: string;
-  testId: string;
+  userId: string
+  rating: number
+  comment?: string
+  timestamp: string
+  testId: string
 }
 
+// BUTUNLAY TOZA TIZIM - NOL'DAN BOSHLASH
 export function useDynamicStats(): DynamicStats {
   const [stats, setStats] = useState<DynamicStats>({
     totalUsers: 0,
-    totalQuestions: 0,
+    totalQuestions: 90, // Faqat mavjud savollar soni
     totalTests: 0,
     averageScore: 0,
     successRate: 0,
@@ -53,217 +54,180 @@ export function useDynamicStats(): DynamicStats {
       testsToday: 0,
       onlineUsers: 0,
     },
-  });
+  })
 
   useEffect(() => {
-    const calculateRealStats = () => {
+    const calculatePureRealStats = () => {
       try {
-        // Real foydalanuvchilar sonini hisoblash
-        const users = JSON.parse(localStorage.getItem("users") || "[]");
-        const totalUsers = users.length;
+        // FAQAT REAL ma'lumotlarni o'qish
+        const users = JSON.parse(localStorage.getItem("users") || "[]")
+        const testResults = JSON.parse(localStorage.getItem("testResults") || "[]")
+        const userRatings = JSON.parse(localStorage.getItem("userRatings") || "[]") as UserRating[]
 
-        // Agar userlar yo'q bo'lsa, minimum qiymatlar
-        const minUsers = totalUsers > 0 ? totalUsers : 1250; // Demo uchun minimum
+        // Demo userlarni filtrlash - faqat real userlar
+        const realUsers = users.filter(
+          (user: any) =>
+            !user.username?.includes("demo_") && !user.username?.includes("test_") && !user.id?.includes("demo_"),
+        )
 
-        // Bugungi yangi foydalanuvchilar
-        const today = new Date().toDateString();
-        const newUsersToday = users.filter((user: any) => {
-          return new Date(user.registeredAt).toDateString() === today;
-        }).length;
+        // Demo testlarni filtrlash - faqat real testlar
+        const realTestResults = testResults.filter((result: any) => {
+          const user = realUsers.find((u: any) => u.id === result.userId)
+          return user !== undefined
+        })
 
-        // Real test natijalarini olish
-        const testResults = JSON.parse(
-          localStorage.getItem("testResults") || "[]"
-        );
-        const totalTests = testResults.length;
+        // Demo ratinglarni filtrlash - faqat real ratinglar
+        const realUserRatings = userRatings.filter((rating: UserRating) => {
+          const user = realUsers.find((u: any) => u.id === rating.userId)
+          return user !== undefined
+        })
 
-        // Bugungi testlar
-        const testsToday = testResults.filter((result: any) => {
-          return new Date(result.completedAt).toDateString() === today;
-        }).length;
+        // Bugungi sana
+        const today = new Date().toDateString()
 
-        // Savollar sonini hisoblash (barcha fanlardan)
-        const questionsData = {
-          matematika: 30,
-          ona_tili: 30,
-          tarix: 30,
-        };
-        const totalQuestions = Object.values(questionsData).reduce(
-          (sum, count) => sum + count,
-          0
-        );
+        // FAQAT REAL statistikalar
+        const totalUsers = realUsers.length
+        const totalTests = realTestResults.length
+        const totalRatings = realUserRatings.length
 
-        // Real o'rtacha ball va muvaffaqiyat darajasini hisoblash
-        let averageScore = 0;
-        let successRate = 0;
+        // Bugungi real userlar
+        const newUsersToday = realUsers.filter((user: any) => {
+          return new Date(user.registeredAt).toDateString() === today
+        }).length
 
-        if (testResults.length > 0) {
-          const totalScore = testResults.reduce((sum: number, result: any) => {
-            return sum + (result.score / result.totalQuestions) * 100;
-          }, 0);
-          averageScore = Math.round(totalScore / testResults.length);
+        // Bugungi real testlar
+        const testsToday = realTestResults.filter((result: any) => {
+          return new Date(result.completedAt).toDateString() === today
+        }).length
 
-          // 70% dan yuqori natija muvaffaqiyatli deb hisoblanadi
-          const successfulTests = testResults.filter((result: any) => {
-            return (result.score / result.totalQuestions) * 100 >= 70;
-          }).length;
-          successRate =
-            testResults.length > 0
-              ? Math.round((successfulTests / testResults.length) * 100)
-              : 85; // Default 85%
-        } else {
-          // Agar testlar yo'q bo'lsa, demo qiymatlar
-          averageScore = 82;
-          successRate = 85;
+        // Real o'rtacha ball
+        let averageScore = 0
+        let successRate = 0
+
+        if (realTestResults.length > 0) {
+          const totalScore = realTestResults.reduce((sum: number, result: any) => {
+            return sum + (result.score / result.totalQuestions) * 100
+          }, 0)
+          averageScore = Math.round(totalScore / realTestResults.length)
+
+          const successfulTests = realTestResults.filter((result: any) => {
+            return (result.score / result.totalQuestions) * 100 >= 70
+          }).length
+          successRate = Math.round((successfulTests / realTestResults.length) * 100)
         }
 
-        // Real faol foydalanuvchilar (oxirgi 24 soat ichida test topshirganlar yoki login bo'lganlar)
-        const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
-        const recentActivity = new Set();
+        // Real faol userlar (oxirgi 24 soat)
+        const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000
+        const activeUserIds = new Set()
 
-        // Test topshirganlar
-        testResults.forEach((result: any) => {
+        realTestResults.forEach((result: any) => {
           if (new Date(result.completedAt).getTime() > twentyFourHoursAgo) {
-            recentActivity.add(result.userId);
+            activeUserIds.add(result.userId)
           }
-        });
+        })
 
-        // Login bo'lganlar
-        users.forEach((user: any) => {
-          if (
-            user.lastLoginAt &&
-            new Date(user.lastLoginAt).getTime() > twentyFourHoursAgo
-          ) {
-            recentActivity.add(user.id);
+        realUsers.forEach((user: any) => {
+          if (user.lastLoginAt && new Date(user.lastLoginAt).getTime() > twentyFourHoursAgo) {
+            activeUserIds.add(user.id)
           }
-        });
+        })
 
-        const activeUsers = Math.max(
-          recentActivity.size,
-          Math.floor(minUsers * 0.35)
-        ); // Minimum 35% active
+        const activeUsers = activeUserIds.size
 
-        // Real foydalanuvchi baholari
-        const userRatings = JSON.parse(
-          localStorage.getItem("userRatings") || "[]"
-        ) as UserRating[];
-        const totalRatings = userRatings.length;
+        // Real online userlar (oxirgi 5 daqiqa)
+        const fiveMinutesAgo = Date.now() - 5 * 60 * 1000
+        const onlineUsers = realUsers.filter((user: any) => {
+          return user.lastLoginAt && new Date(user.lastLoginAt).getTime() > fiveMinutesAgo
+        }).length
+
+        // Real user rating
         const averageUserRating =
           totalRatings > 0
-            ? Math.round(
-                (userRatings.reduce((sum, rating) => sum + rating.rating, 0) /
-                  totalRatings) *
-                  10
-              ) / 10
-            : 4.8; // Default rating
+            ? Math.round((realUserRatings.reduce((sum, rating) => sum + rating.rating, 0) / totalRatings) * 10) / 10
+            : 0
 
-        // Qiyinchilik darajasi statistikasi
-        const difficultyStats = testResults.reduce(
+        // Real qiyinchilik statistikasi
+        const difficultyStats = realTestResults.reduce(
           (acc: any, result: any) => {
-            const difficulty = result.difficulty || "easy";
-            acc[difficulty] = (acc[difficulty] || 0) + 1;
-            return acc;
+            const difficulty = result.difficulty || "easy"
+            acc[difficulty] = (acc[difficulty] || 0) + 1
+            return acc
           },
-          { easy: 0, medium: 0, hard: 0 }
-        );
+          { easy: 0, medium: 0, hard: 0 },
+        )
 
-        // Agar real ma'lumotlar kam bo'lsa, demo qiymatlar qo'shish
-        if (difficultyStats.easy === 0) difficultyStats.easy = 650;
-        if (difficultyStats.medium === 0) difficultyStats.medium = 420;
-        if (difficultyStats.hard === 0) difficultyStats.hard = 180;
-
-        // Online users (oxirgi 5 daqiqada faol bo'lganlar)
-        const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-        const onlineUsers = Math.max(
-          users.filter((user: any) => {
-            return (
-              user.lastLoginAt &&
-              new Date(user.lastLoginAt).getTime() > fiveMinutesAgo
-            );
-          }).length,
-          Math.floor(Math.random() * 15) + 5 // 5-20 orasida random online users
-        );
-
-        const finalStats = {
-          totalUsers: minUsers,
-          totalQuestions,
-          totalTests: Math.max(totalTests, 1450), // Minimum demo qiymat
+        const newStats = {
+          totalUsers,
+          totalQuestions: 90,
+          totalTests,
           averageScore,
           successRate,
           activeUsers,
-          averageUserRating: Math.max(averageUserRating, 4.8),
-          totalRatings: Math.max(totalRatings, 385), // Minimum demo qiymat
+          averageUserRating,
+          totalRatings,
           difficultyStats,
           realTimeData: {
             lastUpdated: new Date().toISOString(),
-            newUsersToday: Math.max(
-              newUsersToday,
-              Math.floor(Math.random() * 8) + 2
-            ), // 2-10 orasida
-            testsToday: Math.max(
-              testsToday,
-              Math.floor(Math.random() * 25) + 15
-            ), // 15-40 orasida
+            newUsersToday,
+            testsToday,
             onlineUsers,
           },
-        };
+        }
 
-        setStats(finalStats);
+        setStats(newStats)
 
-        // Debug log
-        console.log("📊 Stats updated (REAL):", {
-          totalUsers: finalStats.totalUsers,
-          newUsersToday: finalStats.realTimeData.newUsersToday,
-          testsToday: finalStats.realTimeData.testsToday,
-          activeUsers: finalStats.activeUsers,
-          successRate: finalStats.successRate,
-          averageUserRating: finalStats.averageUserRating,
-          timestamp: new Date().toLocaleTimeString(),
-        });
+        // Faqat real ma'lumotlar bo'lganda log
+        if (totalUsers > 0 || totalTests > 0 || totalRatings > 0) {
+          console.log("📊 PURE Real Stats:", {
+            realUsers: totalUsers,
+            realTests: totalTests,
+            realRatings: totalRatings,
+            newToday: newUsersToday,
+            testsToday,
+            onlineNow: onlineUsers,
+          })
+        } else {
+          console.log("📊 Clean slate - No real data yet")
+        }
       } catch (error) {
-        console.error("Error calculating stats:", error);
+        console.error("Error calculating pure stats:", error)
       }
-    };
+    }
 
     // Dastlabki hisoblash
-    calculateRealStats();
+    calculatePureRealStats()
 
-    // Real-time yangilanish uchun event listener
-    const handleStorageChange = (event: any) => {
-      if (
-        event.detail &&
-        ["users", "testResults", "userRatings"].includes(event.detail.key)
-      ) {
-        console.log("🔄 Storage changed:", event.detail.key);
-        setTimeout(calculateRealStats, 100); // Kichik kechikish bilan yangilash
+    // Faqat real storage o'zgarishlarini kuzatish
+    const handleRealStorageChange = (event: any) => {
+      if (event.detail && ["users", "testResults", "userRatings"].includes(event.detail.key)) {
+        console.log("🔄 Real data changed:", event.detail.key)
+        calculatePureRealStats()
       }
-    };
+    }
 
-    window.addEventListener("localStorageChange", handleStorageChange);
-
-    // Har 3 soniyada yangilanadi (real-time effect)
-    const interval = setInterval(calculateRealStats, 3000);
+    window.addEventListener("localStorageChange", handleRealStorageChange)
 
     return () => {
-      window.removeEventListener("localStorageChange", handleStorageChange);
-      clearInterval(interval);
-    };
-  }, []);
+      window.removeEventListener("localStorageChange", handleRealStorageChange)
+    }
+  }, [])
 
-  return stats;
+  return stats
 }
 
-// Foydalanuvchi baholash funksiyasi
-export const addUserRating = (
-  userId: string,
-  rating: number,
-  comment?: string,
-  testId?: string
-) => {
+// FAQAT REAL USER RATING
+export const addUserRating = (userId: string, rating: number, comment?: string, testId?: string) => {
   try {
-    const userRatings = JSON.parse(
-      localStorage.getItem("userRatings") || "[]"
-    ) as UserRating[];
+    // Avval user real ekanligini tekshirish
+    const users = JSON.parse(localStorage.getItem("users") || "[]")
+    const user = users.find((u: any) => u.id === userId)
+
+    if (!user || user.username?.includes("demo_") || user.id?.includes("demo_")) {
+      console.log("❌ Demo user rating blocked")
+      return
+    }
+
+    const userRatings = JSON.parse(localStorage.getItem("userRatings") || "[]") as UserRating[]
 
     const newRating: UserRating = {
       userId,
@@ -271,43 +235,88 @@ export const addUserRating = (
       comment,
       timestamp: new Date().toISOString(),
       testId: testId || `test_${Date.now()}`,
-    };
+    }
 
-    userRatings.push(newRating);
-    localStorage.setItem("userRatings", JSON.stringify(userRatings));
+    userRatings.push(newRating)
+    localStorage.setItem("userRatings", JSON.stringify(userRatings))
 
-    // Real-time event dispatch
+    // Real event dispatch
     window.dispatchEvent(
       new CustomEvent("localStorageChange", {
         detail: { key: "userRatings", timestamp: Date.now() },
-      })
-    );
+      }),
+    )
 
-    console.log("⭐ New rating added:", newRating);
+    console.log("⭐ REAL user rating added:", rating)
   } catch (error) {
-    console.error("Error adding user rating:", error);
+    console.error("Error adding rating:", error)
   }
-};
+}
 
-// Foydalanuvchi baholariga oid statistika
+// DEMO MA'LUMOTLARNI TOZALASH FUNKSIYASI
+export const clearAllDemoData = () => {
+  try {
+    // Barcha demo userlarni o'chirish
+    const users = JSON.parse(localStorage.getItem("users") || "[]")
+    const realUsers = users.filter(
+      (user: any) =>
+        !user.username?.includes("demo_") && !user.username?.includes("test_") && !user.id?.includes("demo_"),
+    )
+    localStorage.setItem("users", JSON.stringify(realUsers))
+
+    // Demo testlarni o'chirish
+    const testResults = JSON.parse(localStorage.getItem("testResults") || "[]")
+    const realTestResults = testResults.filter((result: any) => {
+      const user = realUsers.find((u: any) => u.id === result.userId)
+      return user !== undefined
+    })
+    localStorage.setItem("testResults", JSON.stringify(realTestResults))
+
+    // Demo ratinglarni o'chirish
+    const userRatings = JSON.parse(localStorage.getItem("userRatings") || "[]")
+    const realUserRatings = userRatings.filter((rating: any) => {
+      const user = realUsers.find((u: any) => u.id === rating.userId)
+      return user !== undefined
+    })
+    localStorage.setItem("userRatings", JSON.stringify(realUserRatings))
+
+    // Event dispatch
+    window.dispatchEvent(
+      new CustomEvent("localStorageChange", {
+        detail: { key: "users", timestamp: Date.now() },
+      }),
+    )
+
+    console.log("🧹 All demo data cleared! Clean slate ready.")
+  } catch (error) {
+    console.error("Error clearing demo data:", error)
+  }
+}
+
 export const getUserRatingStats = () => {
-  const userRatings = JSON.parse(
-    localStorage.getItem("userRatings") || "[]"
-  ) as UserRating[];
+  const userRatings = JSON.parse(localStorage.getItem("userRatings") || "[]") as UserRating[]
 
-  const ratingDistribution = userRatings.reduce((acc, rating) => {
-    const star = Math.floor(rating.rating);
-    acc[star] = (acc[star] || 0) + 1;
-    return acc;
-  }, {} as Record<number, number>);
+  // Faqat real userlarning ratinglari
+  const users = JSON.parse(localStorage.getItem("users") || "[]")
+  const realUserRatings = userRatings.filter((rating: UserRating) => {
+    const user = users.find((u: any) => u.id === rating.userId)
+    return user && !user.username?.includes("demo_") && !user.id?.includes("demo_")
+  })
+
+  const ratingDistribution = realUserRatings.reduce(
+    (acc, rating) => {
+      const star = Math.floor(rating.rating)
+      acc[star] = (acc[star] || 0) + 1
+      return acc
+    },
+    {} as Record<number, number>,
+  )
 
   return {
-    total: userRatings.length,
+    total: realUserRatings.length,
     average:
-      userRatings.length > 0
-        ? userRatings.reduce((sum, r) => sum + r.rating, 0) / userRatings.length
-        : 4.9,
+      realUserRatings.length > 0 ? realUserRatings.reduce((sum, r) => sum + r.rating, 0) / realUserRatings.length : 0,
     distribution: ratingDistribution,
-    recent: userRatings.slice(-10), // Oxirgi 10 ta baho
-  };
-};
+    recent: realUserRatings.slice(-10),
+  }
+}

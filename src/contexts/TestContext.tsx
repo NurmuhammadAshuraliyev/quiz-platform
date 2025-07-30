@@ -1,75 +1,76 @@
-"use client";
+"use client"
 
-import { createContext, useContext, useState, type ReactNode } from "react";
-import { useAuth } from "./AuthContext";
+import { createContext, useContext, useState, type ReactNode } from "react"
+import { useAuth } from "./AuthContext"
 
 interface Question {
-  id: string;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  subject: string;
-  difficulty: "easy" | "medium" | "hard";
+  id: string
+  question: string
+  options: string[]
+  correctAnswer: number
+  subject: string
+  difficulty: "easy" | "medium" | "hard"
 }
 
 interface TestResult {
-  id: string;
-  testType: string;
-  subjects: string[];
-  score: number;
-  totalQuestions: number;
+  id: string
+  testType: string
+  subjects: string[]
+  score: number
+  totalQuestions: number
   answers: {
-    questionId: string;
-    selectedAnswer: number;
-    isCorrect: boolean;
-    question?: Question;
-  }[];
-  completedAt: string;
-  userId: string;
-  timeSpent: number;
-  totalTimeGiven: number;
-  difficulty: "easy" | "medium" | "hard";
-  userRating?: number;
-  userComment?: string;
+    questionId: string
+    selectedAnswer: number
+    isCorrect: boolean
+    question?: Question
+  }[]
+  completedAt: string
+  userId: string
+  timeSpent: number
+  totalTimeGiven: number
+  difficulty: "easy" | "medium" | "hard"
+  userRating?: number
+  userComment?: string
 }
 
 interface TestContextType {
   currentTest: {
-    testType: string;
-    subjects: string[];
-    questions: Question[];
-    currentQuestionIndex: number;
-    answers: { questionId: string; selectedAnswer: number }[];
-    timeRemaining: number;
-    totalQuestions: number;
-    startTime: number;
-    totalTimeGiven: number;
-    difficulty: "easy" | "medium" | "hard";
-  } | null;
+    testType: string
+    subjects: string[]
+    questions: Question[]
+    currentQuestionIndex: number
+    answers: { questionId: string; selectedAnswer: number }[]
+    timeRemaining: number
+    totalQuestions: number
+    startTime: number
+    totalTimeGiven: number
+    difficulty: "easy" | "medium" | "hard"
+  } | null
   startTest: (
     testType: string,
     subjects: string[],
     questionCount: number,
-    difficulty?: "easy" | "medium" | "hard"
-  ) => void;
-  submitAnswer: (questionId: string, selectedAnswer: number) => void;
-  nextQuestion: () => void;
-  finishTest: () => TestResult;
-  resetTest: () => void;
+    difficulty?: "easy" | "medium" | "hard",
+  ) => void
+  submitAnswer: (questionId: string, selectedAnswer: number) => void
+  nextQuestion: () => void
+  finishTest: () => TestResult
+  resetTest: () => void
 }
 
-const TestContext = createContext<TestContextType | undefined>(undefined);
+const TestContext = createContext<TestContextType | undefined>(undefined)
 
-// Real-time event dispatcher
-const dispatchStorageEvent = (key: string) => {
+// FAQAT REAL TEST UCHUN EVENT
+const dispatchRealTestEvent = (key: string, username?: string) => {
   window.dispatchEvent(
     new CustomEvent("localStorageChange", {
       detail: { key, timestamp: Date.now() },
-    })
-  );
-};
+    }),
+  )
+  console.log(`📝 REAL TEST completed by:`, username || "user")
+}
 
-// Qiyinchilik darajasiga qarab savollar (kengaytirilgan)
+// Savollar ma'lumotlari (o'zgarishsiz)
 const questionsData: Record<string, Question[]> = {
   matematika: [
     // EASY savollar
@@ -267,12 +268,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "math4_hard",
       question: "f(x) = x³ - 3x² + 2x funksiyaning ekstremum nuqtalari?",
-      options: [
-        "x = 1/3, x = 2",
-        "x = 0, x = 2",
-        "x = 1, x = 2/3",
-        "x = -1, x = 2",
-      ],
+      options: ["x = 1/3, x = 2", "x = 0, x = 2", "x = 1, x = 2/3", "x = -1, x = 2"],
       correctAnswer: 0,
       subject: "matematika",
       difficulty: "hard",
@@ -280,12 +276,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "math5_hard",
       question: "Bernulli tenglamasi qanday ko'rinishda?",
-      options: [
-        "y' + P(x)y = Q(x)y^n",
-        "y' + P(x)y = Q(x)",
-        "y'' + P(x)y' + Q(x)y = 0",
-        "dy/dx = f(x,y)",
-      ],
+      options: ["y' + P(x)y = Q(x)y^n", "y' + P(x)y = Q(x)", "y'' + P(x)y' + Q(x)y = 0", "dy/dx = f(x,y)"],
       correctAnswer: 0,
       subject: "matematika",
       difficulty: "hard",
@@ -306,12 +297,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "math7_hard",
       question: "Green formulasi qaysi integrallarni bog'laydi?",
-      options: [
-        "Chiziqli va sirt",
-        "Sirt va hajm",
-        "Chiziqli va hajm",
-        "Ikki va uch o'lchovli",
-      ],
+      options: ["Chiziqli va sirt", "Sirt va hajm", "Chiziqli va hajm", "Ikki va uch o'lchovli"],
       correctAnswer: 0,
       subject: "matematika",
       difficulty: "hard",
@@ -335,12 +321,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "math10_hard",
       question: "Banach fazosining ta'rifi?",
-      options: [
-        "To'la norma fazosi",
-        "Ichki ko'paytma fazosi",
-        "Metrik fazo",
-        "Topologik fazo",
-      ],
+      options: ["To'la norma fazosi", "Ichki ko'paytma fazosi", "Metrik fazo", "Topologik fazo"],
       correctAnswer: 0,
       subject: "matematika",
       difficulty: "hard",
@@ -432,12 +413,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "uz1_medium",
       question: "Gapning bosh bo'laklari qaysilar?",
-      options: [
-        "Ega va kesim",
-        "To'ldiruvchi va aniqlovchi",
-        "Hol va to'ldiruvchi",
-        "Kesim va hol",
-      ],
+      options: ["Ega va kesim", "To'ldiruvchi va aniqlovchi", "Hol va to'ldiruvchi", "Kesim va hol"],
       correctAnswer: 0,
       subject: "ona_tili",
       difficulty: "medium",
@@ -461,12 +437,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "uz4_medium",
       question: "Gapning ikkinchi darajali bo'laklari qaysilar?",
-      options: [
-        "Ega va kesim",
-        "To'ldiruvchi, aniqlovchi, hol",
-        "Faqat to'ldiruvchi",
-        "Faqat aniqlovchi",
-      ],
+      options: ["Ega va kesim", "To'ldiruvchi, aniqlovchi, hol", "Faqat to'ldiruvchi", "Faqat aniqlovchi"],
       correctAnswer: 1,
       subject: "ona_tili",
       difficulty: "medium",
@@ -565,12 +536,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "uz5_hard",
       question: "Transformatsion grammatikada chuqur struktura nima?",
-      options: [
-        "Yuzaki struktura",
-        "Semantik struktura",
-        "Sintaktik struktura",
-        "Morfologik struktura",
-      ],
+      options: ["Yuzaki struktura", "Semantik struktura", "Sintaktik struktura", "Morfologik struktura"],
       correctAnswer: 1,
       subject: "ona_tili",
       difficulty: "hard",
@@ -578,12 +544,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "uz6_hard",
       question: "Generativ grammatikaning asoschisi kim?",
-      options: [
-        "Noam Chomsky",
-        "Ferdinand de Saussure",
-        "Leonard Bloomfield",
-        "Roman Jakobson",
-      ],
+      options: ["Noam Chomsky", "Ferdinand de Saussure", "Leonard Bloomfield", "Roman Jakobson"],
       correctAnswer: 0,
       subject: "ona_tili",
       difficulty: "hard",
@@ -612,12 +573,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "uz9_hard",
       question: "Sociolingvistikada diglosiya nima?",
-      options: [
-        "Ikki tillilik",
-        "Til variantlarining funksional taqsimoti",
-        "Til o'zgarishi",
-        "Til interferensiyasi",
-      ],
+      options: ["Ikki tillilik", "Til variantlarining funksional taqsimoti", "Til o'zgarishi", "Til interferensiyasi"],
       correctAnswer: 1,
       subject: "ona_tili",
       difficulty: "hard",
@@ -636,12 +592,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "hist1_easy",
       question: "O'zbekiston mustaqillik e'lon qilgan sana?",
-      options: [
-        "1991 yil 31 avgust",
-        "1991 yil 1 sentyabr",
-        "1990 yil 31 avgust",
-        "1992 yil 1 yanvar",
-      ],
+      options: ["1991 yil 31 avgust", "1991 yil 1 sentyabr", "1990 yil 31 avgust", "1992 yil 1 yanvar"],
       correctAnswer: 0,
       subject: "tarix",
       difficulty: "easy",
@@ -649,12 +600,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "hist2_easy",
       question: "O'zbekistonning birinchi prezidenti kim?",
-      options: [
-        "Islam Karimov",
-        "Shavkat Mirziyoyev",
-        "Abdulla Oripov",
-        "Rustam Azimov",
-      ],
+      options: ["Islam Karimov", "Shavkat Mirziyoyev", "Abdulla Oripov", "Rustam Azimov"],
       correctAnswer: 0,
       subject: "tarix",
       difficulty: "easy",
@@ -670,12 +616,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "hist4_easy",
       question: "O'zbekiston Konstitutsiyasi qachon qabul qilingan?",
-      options: [
-        "1992 yil 8 dekabr",
-        "1992 yil 9 dekabr",
-        "1992 yil 10 dekabr",
-        "1992 yil 11 dekabr",
-      ],
+      options: ["1992 yil 8 dekabr", "1992 yil 9 dekabr", "1992 yil 10 dekabr", "1992 yil 11 dekabr"],
       correctAnswer: 0,
       subject: "tarix",
       difficulty: "easy",
@@ -683,12 +624,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "hist5_easy",
       question: "O'zbekiston qachon BMTga a'zo bo'lgan?",
-      options: [
-        "1992 yil 2 mart",
-        "1992 yil 3 mart",
-        "1992 yil 4 mart",
-        "1992 yil 5 mart",
-      ],
+      options: ["1992 yil 2 mart", "1992 yil 3 mart", "1992 yil 4 mart", "1992 yil 5 mart"],
       correctAnswer: 0,
       subject: "tarix",
       difficulty: "easy",
@@ -696,12 +632,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "hist6_easy",
       question: "O'zbekiston bayrog'i qachon qabul qilingan?",
-      options: [
-        "1991 yil 18 noyabr",
-        "1991 yil 19 noyabr",
-        "1991 yil 20 noyabr",
-        "1991 yil 21 noyabr",
-      ],
+      options: ["1991 yil 18 noyabr", "1991 yil 19 noyabr", "1991 yil 20 noyabr", "1991 yil 21 noyabr"],
       correctAnswer: 0,
       subject: "tarix",
       difficulty: "easy",
@@ -709,12 +640,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "hist7_easy",
       question: "O'zbekiston gerbi qachon qabul qilingan?",
-      options: [
-        "1992 yil 2 iyul",
-        "1992 yil 3 iyul",
-        "1992 yil 4 iyul",
-        "1992 yil 5 iyul",
-      ],
+      options: ["1992 yil 2 iyul", "1992 yil 3 iyul", "1992 yil 4 iyul", "1992 yil 5 iyul"],
       correctAnswer: 0,
       subject: "tarix",
       difficulty: "easy",
@@ -722,12 +648,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "hist8_easy",
       question: "O'zbekiston madhiyasi qachon qabul qilingan?",
-      options: [
-        "1992 yil 10 dekabr",
-        "1992 yil 11 dekabr",
-        "1992 yil 12 dekabr",
-        "1992 yil 13 dekabr",
-      ],
+      options: ["1992 yil 10 dekabr", "1992 yil 11 dekabr", "1992 yil 12 dekabr", "1992 yil 13 dekabr"],
       correctAnswer: 2,
       subject: "tarix",
       difficulty: "easy",
@@ -789,12 +710,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "hist5_medium",
       question: "Jadidchilik harakati qachon boshlangan?",
-      options: [
-        "19-asr oxiri",
-        "20-asr boshi",
-        "18-asr oxiri",
-        "19-asr o'rtasi",
-      ],
+      options: ["19-asr oxiri", "20-asr boshi", "18-asr oxiri", "19-asr o'rtasi"],
       correctAnswer: 0,
       subject: "tarix",
       difficulty: "medium",
@@ -851,20 +767,14 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "hist2_hard",
       question: "Xorazmshohlar davlatining so'nggi hukmdori kim edi?",
-      options: [
-        "Jaloliddun Manguberdi",
-        "Atsiz",
-        "Il-Arslon",
-        "Anushtegin G'azni",
-      ],
+      options: ["Jaloliddun Manguberdi", "Atsiz", "Il-Arslon", "Anushtegin G'azni"],
       correctAnswer: 0,
       subject: "tarix",
       difficulty: "hard",
     },
     {
       id: "hist3_hard",
-      question:
-        "Mo'g'ullar istilosi natijasida qaysi shahar butunlay vayron bo'lgan?",
+      question: "Mo'g'ullar istilosi natijasida qaysi shahar butunlay vayron bo'lgan?",
       options: ["Urganch", "Samarqand", "Buxoro", "Toshkent"],
       correctAnswer: 0,
       subject: "tarix",
@@ -873,12 +783,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "hist4_hard",
       question: "Shayboniylar davlatining asoschisi kim?",
-      options: [
-        "Muhammad Shayboniy",
-        "Abdullaxon II",
-        "Ubaydullaxon",
-        "Iskandar",
-      ],
+      options: ["Muhammad Shayboniy", "Abdullaxon II", "Ubaydullaxon", "Iskandar"],
       correctAnswer: 0,
       subject: "tarix",
       difficulty: "hard",
@@ -894,12 +799,7 @@ const questionsData: Record<string, Question[]> = {
     {
       id: "hist6_hard",
       question: "Ismoil Somoni qachon hukmronlik qilgan?",
-      options: [
-        "892-907 yillar",
-        "893-908 yillar",
-        "894-909 yillar",
-        "895-910 yillar",
-      ],
+      options: ["892-907 yillar", "893-908 yillar", "894-909 yillar", "895-910 yillar"],
       correctAnswer: 0,
       subject: "tarix",
       difficulty: "hard",
@@ -937,50 +837,40 @@ const questionsData: Record<string, Question[]> = {
       difficulty: "hard",
     },
   ],
-};
+}
 
 export function TestProvider({ children }: { children: ReactNode }) {
-  const [currentTest, setCurrentTest] =
-    useState<TestContextType["currentTest"]>(null);
-  const { updateUserStats } = useAuth();
+  const [currentTest, setCurrentTest] = useState<TestContextType["currentTest"]>(null)
+  const { updateUserStats, user } = useAuth()
 
   const startTest = (
     testType: string,
     subjects: string[],
     questionCount: number,
-    difficulty: "easy" | "medium" | "hard" = "easy"
+    difficulty: "easy" | "medium" | "hard" = "easy",
   ) => {
-    const allQuestions: Question[] = [];
-    const usedQuestionIds = new Set<string>();
+    const allQuestions: Question[] = []
+    const usedQuestionIds = new Set<string>()
 
     subjects.forEach((subject) => {
-      const subjectQuestions =
-        questionsData[subject]?.filter((q) => q.difficulty === difficulty) ||
-        [];
-      const questionsPerSubject = Math.ceil(questionCount / subjects.length);
+      const subjectQuestions = questionsData[subject]?.filter((q) => q.difficulty === difficulty) || []
+      const questionsPerSubject = Math.ceil(questionCount / subjects.length)
 
-      const availableQuestions = subjectQuestions.filter(
-        (q) => !usedQuestionIds.has(q.id)
-      );
-      const selectedQuestions = availableQuestions
-        .sort(() => Math.random() - 0.5)
-        .slice(0, questionsPerSubject);
+      const availableQuestions = subjectQuestions.filter((q) => !usedQuestionIds.has(q.id))
+      const selectedQuestions = availableQuestions.sort(() => Math.random() - 0.5).slice(0, questionsPerSubject)
 
-      selectedQuestions.forEach((q) => usedQuestionIds.add(q.id));
-      allQuestions.push(...selectedQuestions);
-    });
+      selectedQuestions.forEach((q) => usedQuestionIds.add(q.id))
+      allQuestions.push(...selectedQuestions)
+    })
 
-    const finalQuestions = allQuestions
-      .sort(() => Math.random() - 0.5)
-      .slice(0, questionCount);
+    const finalQuestions = allQuestions.sort(() => Math.random() - 0.5).slice(0, questionCount)
 
-    // Qiyinchilik darajasiga qarab vaqt hisoblash
     const timeMultiplier = {
-      easy: 2, // 2 daqiqa har savol uchun
-      medium: 3, // 3 daqiqa har savol uchun
-      hard: 5, // 5 daqiqa har savol uchun
-    };
-    const totalTimeInSeconds = questionCount * timeMultiplier[difficulty] * 60;
+      easy: 2,
+      medium: 3,
+      hard: 5,
+    }
+    const totalTimeInSeconds = questionCount * timeMultiplier[difficulty] * 60
 
     setCurrentTest({
       testType,
@@ -993,69 +883,68 @@ export function TestProvider({ children }: { children: ReactNode }) {
       startTime: Date.now(),
       totalTimeGiven: totalTimeInSeconds,
       difficulty,
-    });
+    })
 
-    console.log("🚀 Test started:", {
+    console.log("🚀 REAL TEST started by:", user?.username, {
       testType,
       subjects,
       difficulty,
       questionCount,
-      timeInMinutes: totalTimeInSeconds / 60,
-    });
-  };
+    })
+  }
 
   const submitAnswer = (questionId: string, selectedAnswer: number) => {
-    if (!currentTest) return;
+    if (!currentTest) return
 
-    const existingAnswerIndex = currentTest.answers.findIndex(
-      (a) => a.questionId === questionId
-    );
-    const newAnswers = [...currentTest.answers];
+    const existingAnswerIndex = currentTest.answers.findIndex((a) => a.questionId === questionId)
+    const newAnswers = [...currentTest.answers]
 
     if (existingAnswerIndex >= 0) {
-      newAnswers[existingAnswerIndex] = { questionId, selectedAnswer };
+      newAnswers[existingAnswerIndex] = { questionId, selectedAnswer }
     } else {
-      newAnswers.push({ questionId, selectedAnswer });
+      newAnswers.push({ questionId, selectedAnswer })
     }
 
     setCurrentTest({
       ...currentTest,
       answers: newAnswers,
-    });
-  };
+    })
+  }
 
   const nextQuestion = () => {
-    if (!currentTest) return;
+    if (!currentTest) return
 
     if (currentTest.currentQuestionIndex < currentTest.questions.length - 1) {
       setCurrentTest({
         ...currentTest,
         currentQuestionIndex: currentTest.currentQuestionIndex + 1,
-      });
+      })
     }
-  };
+  }
 
   const finishTest = (): TestResult => {
-    if (!currentTest) throw new Error("No active test");
+    if (!currentTest) throw new Error("No active test")
 
-    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}");
-    const timeSpent = Math.floor((Date.now() - currentTest.startTime) / 1000);
+    const currentUser = JSON.parse(localStorage.getItem("currentUser") || "{}")
 
-    let correctAnswers = 0;
+    // Demo user emasligini tekshirish
+    if (currentUser.username?.includes("demo_") || currentUser.id?.includes("demo_")) {
+      throw new Error("Demo user cannot complete test")
+    }
+
+    const timeSpent = Math.floor((Date.now() - currentTest.startTime) / 1000)
+
+    let correctAnswers = 0
     const detailedAnswers = currentTest.answers.map((answer) => {
-      const question = currentTest.questions.find(
-        (q) => q.id === answer.questionId
-      );
-      const isCorrect = question
-        ? question.correctAnswer === answer.selectedAnswer
-        : false;
-      if (isCorrect) correctAnswers++;
+      const question = currentTest.questions.find((q) => q.id === answer.questionId)
+      const isCorrect = question ? question.correctAnswer === answer.selectedAnswer : false
+      if (isCorrect) correctAnswers++
       return {
         ...answer,
         isCorrect,
         question,
-      };
-    });
+      }
+    })
 
     const result: TestResult = {
       id: `test_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -1069,33 +958,30 @@ export function TestProvider({ children }: { children: ReactNode }) {
       timeSpent,
       totalTimeGiven: currentTest.totalTimeGiven,
       difficulty: currentTest.difficulty,
-    };
+    }
 
-    const results = JSON.parse(localStorage.getItem("testResults") || "[]");
-    results.push(result);
-    localStorage.setItem("testResults", JSON.stringify(results));
+    const results = JSON.parse(localStorage.getItem("testResults") || "[]")
+    results.push(result)
+    localStorage.setItem("testResults", JSON.stringify(results))
 
-    // Real-time event dispatch
-    dispatchStorageEvent("testResults");
+    // FAQAT real test yakunlanganda event dispatch
+    dispatchRealTestEvent("testResults", currentUser.username)
 
     // User statistikalarini yangilash
-    updateUserStats(currentUser.id);
+    updateUserStats(currentUser.id)
 
-    console.log("✅ Test completed:", {
+    console.log("✅ REAL TEST completed by:", currentUser.username, {
       score: `${correctAnswers}/${currentTest.questions.length}`,
-      percentage: Math.round(
-        (correctAnswers / currentTest.questions.length) * 100
-      ),
+      percentage: Math.round((correctAnswers / currentTest.questions.length) * 100),
       difficulty: currentTest.difficulty,
-      timeSpent: Math.round(timeSpent / 60) + " minutes",
-    });
+    })
 
-    return result;
-  };
+    return result
+  }
 
   const resetTest = () => {
-    setCurrentTest(null);
-  };
+    setCurrentTest(null)
+  }
 
   return (
     <TestContext.Provider
@@ -1110,13 +996,13 @@ export function TestProvider({ children }: { children: ReactNode }) {
     >
       {children}
     </TestContext.Provider>
-  );
+  )
 }
 
 export function useTest() {
-  const context = useContext(TestContext);
+  const context = useContext(TestContext)
   if (context === undefined) {
-    throw new Error("useTest must be used within a TestProvider");
+    throw new Error("useTest must be used within a TestProvider")
   }
-  return context;
+  return context
 }
